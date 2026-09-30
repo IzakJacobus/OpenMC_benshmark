@@ -2,7 +2,7 @@ import openmc as mc
 import numpy as np
 
 
-temp = 800
+temp = 1200
 
 # Materials
 #======================================================

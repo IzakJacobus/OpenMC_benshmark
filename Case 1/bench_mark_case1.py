@@ -48,7 +48,7 @@ settings.source = mc.IndependentSource(space=uniform_dist,)
 # =======================================
 # EnergyFilter looks at the energy of eutrons befor a collision
 energy_in_epithermal = mc.EnergyFilter([1.86, 2.0e7])   
-# EnergyoutFilter looks at the energy of eutrons befor a collision
+# EnergyoutFilter looks at the energy of eutrons after a collision
 energyout_thermal = mc.EnergyoutFilter([0.0, 1.86])
 
 epi_to_thermal_tally = mc.Tally(name='epithermal to thermal scatter')

@@ -2,7 +2,7 @@ import numpy as np
 import openmc as mc
 import matplotlib.pyplot as plt
 
-temp_fule = 800 # K
+temp_fule = 1200 # K
 temp_C = 1200 # K
 
 # Material
