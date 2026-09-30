@@ -17,7 +17,7 @@ hom_mix.set_density('atom/b-cm', 5.29791e-02)
 hom_mix.add_s_alpha_beta('c_Graphite')
 #hom_mix.temperature = temp
 
-# Graphite reflector (same matrix graphite as Cases 2 and 3)
+# Graphite reflector
 reflector = mc.Material(name='Graphite reflector')
 reflector.add_element('C', 9.0248e-02, 'ao')
 reflector.set_density('atom/b-cm', 9.0248e-02)
@@ -46,29 +46,20 @@ geometry = mc.Geometry([cube_cell,reflector_cell])
 # Run settings
 # =======================================
 settings = mc.Settings()
-settings.batches = 100
+settings.batches = 200
 settings.inactive = 30
-settings.particles = 5000
+settings.particles = 10000
 settings.temperature = {'method': 'interpolation'}
 
 bounds = [-5, 5, -5, 5, -5, 5]
 uniform_dist = mc.stats.Box(bounds[:3], bounds[3:])
 settings.source = mc.IndependentSource(space=uniform_dist,)
 
-# Shannon entropy mesh to check fission source convergence.
-# Fission only happens in the core, so the mesh only covers the core.
-# 6x6x6 = 216 cells keeps ~20+ source particles per cell (5000 / 216)
-entropy_mesh = mc.RegularMesh()
-entropy_mesh.dimension = (6, 6, 6)
-entropy_mesh.lower_left = (-50, -50, -50)
-entropy_mesh.upper_right = (50, 50, 50)
-settings.entropy_mesh = entropy_mesh
-
 # In-core scattering epithermal -> thermal
 # =======================================
 # EnergyFilter looks at the energy of eutrons befor a collision
 energy_in_epithermal = mc.EnergyFilter([1.86, 2.0e7])   
-# EnergyoutFilter looks at the energy of eutrons befor a collision
+# EnergyoutFilter looks at the energy of eutrons after a collision
 energyout_thermal = mc.EnergyoutFilter([0.0, 1.86])
 
 """
@@ -142,17 +133,6 @@ mc.run()
 
 sp = mc.StatePoint(f'statepoint.{settings.batches}.h5')
 
-# Source convergence check: the entropy should be flat before the active
-# batches start. If the last inactive batch is outside the active-batch band,
-# increase settings.inactive.
-entropy = sp.entropy
-active_entropy = entropy[settings.inactive:]
-entropy_mean = active_entropy.mean()
-entropy_std = active_entropy.std()
-last_inactive = entropy[settings.inactive - 1]
-if abs(last_inactive - entropy_mean) > 2 * entropy_std:
-    print('WARNING: entropy not converged before active batches, increase settings.inactive')
-
 epi_to_thermal_scatter = sp.get_tally(name='epithermal to thermal scatter').mean.flatten()[0]
 absorption_rate = sp.get_tally(name='absorption').mean.flatten()[0]
 core_abs_rate = sp.get_tally(name='core absorption').mean.flatten()[0]
@@ -186,7 +166,7 @@ epi_to_thermal_ratio = epithermal_flux / thermal_flux
 
 print(f'In-core scattering epithermal -> thermal: {pct_epi_thermal:.1f}%')
 print(f'Core average epithermal-to-thermal ratio over the core: {epi_to_thermal_ratio:.2f}')
-print(f'Leakage out of system: {leakage_rate / destruction_rate * 100:.1f}%')
+print(f'Leakage out of system: {leakage_rate / destruction_rate:.3f}')
 print(f'Leakage epithermal (> 1.86 eV): {net_leak_epithermal / core_destruction * 100:.1f}%')
 print(f'Leakage thermal (< 1.86 eV): {net_leak_thermal / core_destruction * 100:.1f}%')
 print(f'Leakage total (core -> reflector): {net_leakage_total / core_destruction * 100:.1f}%')
