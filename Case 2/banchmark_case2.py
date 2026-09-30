@@ -2,7 +2,8 @@ import numpy as np
 import openmc as mc
 import matplotlib.pyplot as plt
 
-temp = 300
+temp_fule = 800 # K
+temp_C = 1200 # K
 
 # Material
 # =========================
@@ -67,8 +68,8 @@ for s in peb_spheres[1:]:
 fuel_cell = mc.Cell(name='fuel zone', region=fuel_region, fill=fuel)
 shell_cell = mc.Cell(name='graphite shell', region=shell_region, fill=shell)
 void_cell = mc.Cell(name='void between pebbles', region=void_region)  # void
-fuel_cell.temperature = temp
-shell_cell.temperature = temp
+fuel_cell.temperature = temp_fule
+shell_cell.temperature = temp_C
 
 bcc_universe = mc.Universe(cells=[fuel_cell, shell_cell, void_cell])
 
@@ -140,7 +141,7 @@ settings.temperature = {'method': 'interpolation'}
 
 bounds = [-5, 5, -5, 5, -5, 5]
 uniform_dist = mc.stats.Box(bounds[:3], bounds[3:])
-settings.source = mc.IndependentSource(space=uniform_dist,)
+settings.source = mc.IndependentSource(space=uniform_dist, constraints={'fissionable': True})
 
 # Export
 # =======================================
@@ -155,9 +156,9 @@ mc.run()
 
 # Print Tallies
 # =======================================
-sp = mc.StatePoint(f'statpoint.{settings.batches}.h5')
+sp = mc.StatePoint(f'statepoint.{settings.batches}.h5')
 
-epi_to_thermal_scatter = sp.get_tally(name='Epithermal to thermal scattering')
+epi_to_thermal_scatter = sp.get_tally(name='Epithermal to thermal scattering').mean.flatten()[0]
 absorption_rate = sp.get_tally(name='Absorption').mean.flatten()[0]
 destruction_rate = absorption_rate
 
